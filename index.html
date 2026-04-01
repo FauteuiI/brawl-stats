@@ -45,7 +45,6 @@
     <script>
     async function loadMaps() {
         const container = document.getElementById('maps-container');
-        // Proxy AllOrigins pour les données
         const proxyUrl = "https://api.allorigins.win/get?url=";
         const apiUrl = encodeURIComponent("https://api.brawlapi.com/v1/events");
 
@@ -59,16 +58,18 @@
 
             data.active.forEach(event => {
                 const mapName = event.map?.name || "Map Inconnue";
-                const modeName = event.map?.gameMode?.name || "BRAWL STARS";
+                const modeName = event.map?.gameMode?.name || "Brawl Stars";
                 
-                // Au lieu de l'image de l'API qui bloque, on met une icône de secours Google
-                // On utilise une couleur différente selon le mode pour que ce soit beau
-                const iconColor = mapName.length % 2 === 0 ? "text-blue-500" : "text-yellow-500";
+                // On utilise un proxy d'image pour contourner le blocage
+                const originalImg = event.map?.imageUrl || "";
+                const proxiedImg = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}`;
 
                 container.innerHTML += `
                     <div class="card overflow-hidden flex items-center mb-4 p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
-                        <div class="w-20 h-20 flex-shrink-0 bg-gray-900 rounded-xl flex items-center justify-center border border-gray-500">
-                             <span style="font-size: 40px;">🎮</span>
+                        <div class="relative w-24 h-24 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500">
+                            <img src="${proxiedImg}" 
+                                 class="w-full h-full object-cover" 
+                                 onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\'font-size: 40px;\' class=\'flex justify-center mt-3\'>🎮</span>';">
                         </div>
                         <div class="ml-5">
                             <p class="font-bold text-xl text-yellow-400 tracking-wide brawl-font">${mapName}</p>
@@ -79,7 +80,7 @@
                     </div>`;
             });
         } catch (e) {
-            container.innerHTML = "<p class='text-red-500 font-bold'>Serveur en maintenance, réessaie plus tard.</p>";
+            console.error(e);
         }
     }
 
