@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brawl Stats Tracker</title>
+    <title>Brawl Stats Tracker - Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
@@ -16,7 +16,7 @@
 
 <header class="text-center mb-10">
     <h1 class="text-5xl brawl-font text-yellow-400 drop-shadow-lg">BRAWL TRACKER</h1>
-    <p class="text-gray-400 mt-2">Maps en direct et stats des joueurs</p>
+    <p class="text-gray-400 mt-2">Serveur Personnel en Ligne 🚀</p>
 </header>
 
 <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -24,7 +24,7 @@
     <section>
         <h2 class="text-2xl brawl-font mb-4 text-blue-400">Maps Actuelles</h2>
         <div id="maps-container" class="space-y-4">
-            <p>Chargement des maps...</p>
+            <p>Chargement des maps via Render...</p>
         </div>
     </section>
 
@@ -46,59 +46,41 @@
 </main>
 
 <script>
-const PROXY = "https://api.allorigins.win/get?url=";
+// ⚠️ REMPLACE CETTE URL PAR LA TIENNE (DONNÉE PAR RENDER)
+const API_URL = "https://brawl-stats-xxxx.onrender.com"; 
 
 async function loadMaps() {
     const container = document.getElementById('maps-container');
 
     try {
-        const res = await fetch(PROXY + encodeURIComponent("https://api.brawlapi.com/v1/events"));
-        const result = await res.json();
-        const data = JSON.parse(result.contents);
+        // On appelle TON serveur
+        const res = await fetch(`${API_URL}/api/maps`);
+        const data = await res.json();
 
         if (!data.active) return;
-
         container.innerHTML = '';
 
         data.active.forEach(event => {
             const mapName = event.map?.name || "Map Inconnue";
-
-            // ✅ IMAGE INTELLIGENTE
-            let finalImg = event.map?.imageUrl;
-
-            // Si pas d'image → icône du mode
-            if (!finalImg) {
-                const modeId = event.map?.gameMode?.id || "gemGrab";
-                finalImg = `https://cdn.brawlify.com/gamemodes/${modeId}.png`;
-            }
-
-            // Si encore rien → placeholder sûr
-            if (!finalImg) {
-                finalImg = "https://via.placeholder.com/150?text=No+Image";
-            }
+            let finalImg = event.map?.imageUrl || `https://cdn.brawlify.com/gamemodes/${event.map?.gameMode?.id || "gemGrab"}.png`;
 
             container.innerHTML += `
                 <div class="card flex items-center p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
-                    
                     <div class="w-20 h-20 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500">
-                        <img src="${finalImg}" 
-                             class="w-full h-full object-cover"
-                             onerror="this.src='https://via.placeholder.com/150?text=Error'">
+                        <img src="${finalImg}" class="w-full h-full object-cover">
                     </div>
-
                     <div class="ml-5">
                         <p class="font-bold text-xl text-yellow-400 tracking-wide brawl-font">${mapName}</p>
                         <p class="text-xs font-black text-white uppercase bg-blue-600 px-3 py-1 rounded-full mt-1 border border-blue-400">
                             ACTIVE
                         </p>
                     </div>
-
                 </div>`;
         });
 
     } catch (e) {
         console.error("Erreur:", e);
-        container.innerHTML = "<p class='text-red-500'>Erreur de chargement</p>";
+        container.innerHTML = "<p class='text-red-500'>Erreur : Vérifie que ton serveur Render est 'Live'</p>";
     }
 }
 
@@ -108,22 +90,20 @@ async function searchPlayer() {
 
     if(!tag) return alert("Mets un tag !");
 
-    resultDiv.innerHTML = "<p class='text-center animate-pulse text-yellow-500 font-bold'>RECHERCHE...</p>";
+    resultDiv.innerHTML = "<p class='text-center animate-pulse text-yellow-500 font-bold'>RECHERCHE SUR LE SERVEUR...</p>";
     resultDiv.classList.remove('hidden');
 
     try {
-        const res = await fetch(PROXY + encodeURIComponent(`https://api.brawlapi.com/v1/player/${tag}`));
-        const result = await res.json();
-        const player = JSON.parse(result.contents);
+        // On appelle TON serveur pour le joueur
+        const res = await fetch(`${API_URL}/api/player/%23${tag}`);
+        const player = await res.json();
 
         resultDiv.innerHTML = `
         <div class="text-center p-6 bg-gray-800 rounded-2xl border-4 border-yellow-500 shadow-2xl">
             <p class="text-4xl brawl-font text-white mb-2 uppercase">${player.name}</p>
-
             <div class="inline-block bg-black/40 px-6 py-2 rounded-full border border-yellow-600/50">
-                <p class="text-2xl font-black text-yellow-400">${player.trophies.toLocaleString()} 🏆</p>
+                <p class="text-2xl font-black text-yellow-400">${player.trophies?.toLocaleString() || 0} 🏆</p>
             </div>
-
             <div class="mt-6 grid grid-cols-2 gap-4 text-xs font-bold uppercase">
                 <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-600">
                     <p class="text-gray-400">Brawlers</p>
@@ -136,7 +116,7 @@ async function searchPlayer() {
             </div>
         </div>`;
     } catch (e) {
-        resultDiv.innerHTML = "<p class='text-red-500 font-bold text-center p-4 rounded-xl'>JOUEUR INTROUVABLE !</p>";
+        resultDiv.innerHTML = "<p class='text-red-500 font-bold text-center p-4'>JOUEUR INTROUVABLE SUR RENDER</p>";
     }
 }
 
