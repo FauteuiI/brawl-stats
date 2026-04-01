@@ -43,26 +43,28 @@
     </main>
 
     <script>
-    const PROXY = "https://corsproxy.io/?";
-    const API_URL = "https://api.brawlapi.com/v1/events";
-
     async function loadMaps() {
         const container = document.getElementById('maps-container');
+        // On change de proxy pour AllOrigins (le plus costaud)
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const apiUrl = encodeURIComponent("https://api.brawlapi.com/v1/events");
+
         try {
-            const res = await fetch(PROXY + encodeURIComponent(API_URL));
-            const data = await res.json();
+            const response = await fetch(proxyUrl + apiUrl);
+            const result = await response.json();
+            // Avec AllOrigins, les données sont cachées dans "contents"
+            const data = JSON.parse(result.contents);
             
             if (!data.active) return;
             container.innerHTML = '';
 
-            // On enlève le .slice(0,3) pour avoir TOUTES les maps
             data.active.forEach(event => {
-                // RADAR POUR LE NOM DU MODE
+                // On fouille partout pour trouver le nom du mode
                 const modeName = event.event?.mode?.name || 
                                  event.map?.gameMode?.name || 
-                                 event.gameMode?.name || "Mode Inconnu";
+                                 event.gameMode?.name || "Mode Spécial";
 
-                // RADAR POUR L'IMAGE DE LA MAP
+                // On fouille pour l'image
                 const mapImg = event.map?.imageUrl || 
                                event.event?.map?.imageUrl || 
                                "https://cdn.brawlapi.com/unknown.png";
@@ -83,9 +85,9 @@
                         </div>
                     </div>`;
             });
-        } catch (e) { 
-            console.error(e);
-            container.innerHTML = "<p class='text-red-500'>Erreur de connexion...</p>";
+        } catch (e) {
+            console.error("Erreur AllOrigins:", e);
+            container.innerHTML = "<p class='text-red-500'>Problème de réseau, actualise la page !</p>";
         }
     }
 
@@ -93,12 +95,14 @@
         let tag = document.getElementById('playerTag').value.replace('#', '').trim();
         const resultDiv = document.getElementById('player-result');
         if(!tag) return alert("Mets un tag !");
-        resultDiv.innerHTML = "<p class='text-center animate-pulse text-yellow-500'>Recherche du compte...</p>";
+        resultDiv.innerHTML = "<p class='text-center animate-pulse text-yellow-500 font-bold'>RECHERCHE DU COMPTE...</p>";
         resultDiv.classList.remove('hidden');
 
         try {
-            const res = await fetch(PROXY + encodeURIComponent(`https://api.brawlapi.com/v1/player/${tag}`));
-            const player = await res.json();
+            const playerUrl = encodeURIComponent(`https://api.brawlapi.com/v1/player/${tag}`);
+            const res = await fetch(`https://api.allorigins.win/get?url=${playerUrl}`);
+            const result = await res.json();
+            const player = JSON.parse(result.contents);
 
             resultDiv.innerHTML = `
                 <div class="text-center p-6 bg-gradient-to-b from-gray-700 to-gray-800 rounded-2xl border-4 border-yellow-500 shadow-2xl">
@@ -108,17 +112,17 @@
                     </div>
                     <div class="mt-6 grid grid-cols-2 gap-4 text-sm font-bold">
                         <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-600">
-                            <p class="text-gray-400">BRAWLERS</p>
+                            <p class="text-gray-400 uppercase">Brawlers</p>
                             <p class="text-2xl text-green-400 font-black">${player.brawlers?.length || 0}</p>
                         </div>
                         <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-600">
-                            <p class="text-gray-400">NIVEAU</p>
+                            <p class="text-gray-400 uppercase">Niveau</p>
                             <p class="text-2xl text-blue-400 font-black">${player.expLevel || 0}</p>
                         </div>
                     </div>
                 </div>`;
         } catch (e) {
-            resultDiv.innerHTML = "<p class='text-red-500 text-center bg-red-900/30 p-4 rounded-xl border border-red-800'>Joueur introuvable ! Vérifie le Tag.</p>";
+            resultDiv.innerHTML = "<p class='text-red-500 font-bold text-center'>JOUEUR INTROUVABLE !</p>";
         }
     }
 
