@@ -63,17 +63,27 @@ async function loadMaps() {
         data.active.forEach(event => {
             const mapName = event.map?.name || "Map Inconnue";
 
-            // ✅ IMAGE FIX (API DIRECTE)
-            const finalImg = event.map?.imageUrl || 
-                "https://cdn.brawlify.com/maps/placeholder.png";
+            // ✅ IMAGE INTELLIGENTE
+            let finalImg = event.map?.imageUrl;
+
+            // Si pas d'image → icône du mode
+            if (!finalImg) {
+                const modeId = event.map?.gameMode?.id || "gemGrab";
+                finalImg = `https://cdn.brawlify.com/gamemodes/${modeId}.png`;
+            }
+
+            // Si encore rien → placeholder sûr
+            if (!finalImg) {
+                finalImg = "https://via.placeholder.com/150?text=No+Image";
+            }
 
             container.innerHTML += `
-                <div class="card overflow-hidden flex items-center mb-4 p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
+                <div class="card flex items-center p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
                     
                     <div class="w-20 h-20 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500">
                         <img src="${finalImg}" 
                              class="w-full h-full object-cover"
-                             onerror="this.src='https://cdn.brawlify.com/maps/placeholder.png'">
+                             onerror="this.src='https://via.placeholder.com/150?text=Error'">
                     </div>
 
                     <div class="ml-5">
