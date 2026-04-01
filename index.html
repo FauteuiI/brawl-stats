@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brawl Stats Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
+        body { background-color: #1a202c; color: white; }
+        .brawl-font { font-family: 'Luckiest+Guy', cursive; }
+        .card { background: #2d3748; border-radius: 15px; border: 3px solid #4a5568; }
+    </style>
+</head>
+<body class="p-5">
+
+    <header class="text-center mb-10">
+        <h1 class="text-5xl brawl-font text-yellow-400 drop-shadow-lg">BRAWL TRACKER</h1>
+        <p class="text-gray-400 mt-2">Maps en direct et stats des joueurs</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+        
+        <section>
+            <h2 class="text-2xl brawl-font mb-4 text-blue-400">Maps Actuelles</h2>
+            <div id="maps-container" class="space-y-4">
+                <p>Chargement des maps...</p>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-2xl brawl-font mb-4 text-green-400">Chercher un Joueur</h2>
+            <div class="card p-6">
+                <div class="flex gap-2">
+                    <input type="text" id="playerTag" placeholder="Tag ex: #PL2V82" class="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white outline-none">
+                    <button onclick="searchPlayer()" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded transition">OK</button>
+                </div>
+                <div id="player-result" class="mt-6 hidden">
+                    </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 1. Récupérer les Maps via BrawlAPI
+        async function loadMaps() {
+            try {
+                const res = await fetch('https://api.brawlapi.com/v1/events');
+                const data = await res.json();
+                const container = document.getElementById('maps-container');
+                container.innerHTML = '';
+
+                // On affiche les 3 premières maps actives
+                data.active.slice(0, 3).forEach(event => {
+                    container.innerHTML += `
+                        <div class="card overflow-hidden flex items-center">
+                            <img src="${event.map.imageUrl}" class="w-24 h-24 object-cover">
+                            <div class="p-4">
+                                <p class="font-bold text-lg">${event.map.name}</p>
+                                <p class="text-sm text-gray-400">${event.map.gameMode.name}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // 2. Chercher un joueur (Via BrawlAPI aussi pour éviter les clés complexes au début)
+        async function searchPlayer() {
+            let tag = document.getElementById('playerTag').value.replace('#', '');
+            const resultDiv = document.getElementById('player-result');
+            
+            if(!tag) return alert("Mets un tag !");
+
+            resultDiv.innerHTML = "Recherche...";
+            resultDiv.classList.remove('hidden');
+
+            try {
+                // Note: BrawlAPI a une limite sur les joueurs, si ça rate, il faudra passer par l'API officielle
+                const res = await fetch(`https://api.brawlapi.com/v1/player/${tag}`);
+                if(!res.ok) throw new Error("Joueur non trouvé");
+                const player = await res.json();
+
+                resultDiv.innerHTML = `
+                    <div class="text-center">
+                        <p class="text-3xl brawl-font text-yellow-400">${player.name}</p>
+                        <p class="text-gray-300">Trophées: ${player.trophies} 🏆</p>
+                        <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                            <div class="bg-gray-700 p-2 rounded">Brawlers: ${player.brawlers.length}</div>
+                            <div class="bg-gray-700 p-2 rounded">Niveau: ${player.expLevel}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                resultDiv.innerHTML = "<p class='text-red-500 text-center font-bold'>Erreur : Joueur introuvable ou API saturée.</p>";
+            }
+        }
+
+        loadMaps();
+    </script>
+</body>
+</html>
