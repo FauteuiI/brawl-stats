@@ -48,8 +48,11 @@
 
     async function loadMaps() {
         const container = document.getElementById('maps-container');
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const apiUrl = encodeURIComponent("https://api.brawlapi.com/v1/events");
+
         try {
-            const response = await fetch(PROXY + encodeURIComponent(API_URL));
+            const response = await fetch(proxyUrl + apiUrl);
             const result = await response.json();
             const data = JSON.parse(result.contents);
             
@@ -58,32 +61,29 @@
 
             data.active.forEach(event => {
                 const mapName = event.map?.name || "Map Inconnue";
-                const modeName = event.map?.gameMode?.name || "Brawl Stars";
+                // On récupère l'identifiant du mode (ex: gemGrab, brawlBall)
+                const modeKey = event.map?.gameMode?.hash || "gemGrab";
                 
-                // On utilise Cloudinary comme proxy de secours, c'est ultra puissant
-                const rawImg = event.map?.imageUrl || "";
-                const backupImg = `https://res.cloudinary.com/demo/image/fetch/f_auto,q_auto/https://cdn.brawlapi.com/unknown.png`;
-                const finalImg = `https://images.weserv.nl/?url=${encodeURIComponent(rawImg)}&w=300`;
+                // SOURCE GARANTIE : On utilise les icônes de modes stockées sur GitHub
+                const finalImg = `https://raw.githubusercontent.com/BrawlAPI/BrawlAPI/main/assets/gamemodes/icons/64/${modeKey}.png`;
 
                 container.innerHTML += `
                     <div class="card overflow-hidden flex items-center mb-4 p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
-                        <div class="relative w-24 h-24 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500 shadow-inner">
+                        <div class="relative w-20 h-20 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500">
                             <img src="${finalImg}" 
-                                 class="w-full h-full object-cover"
-                                 onload="this.style.opacity='1'"
-                                 style="opacity:0; transition: opacity 0.5s;"
-                                 onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/BrawlAPI/BrawlAPI/main/assets/gamemodes/icons/64/gemGrab.png'">
+                                 class="w-full h-full object-contain p-2" 
+                                 onerror="this.src='https://raw.githubusercontent.com/BrawlAPI/BrawlAPI/main/assets/gamemodes/icons/64/gemGrab.png'">
                         </div>
                         <div class="ml-5">
                             <p class="font-bold text-xl text-yellow-400 tracking-wide brawl-font">${mapName}</p>
                             <p class="text-xs font-black text-white uppercase bg-blue-600 px-3 py-1 rounded-full mt-1 border border-blue-400">
-                                ${modeName}
+                                ACTIVE
                             </p>
                         </div>
                     </div>`;
             });
         } catch (e) {
-            console.error("Erreur critique:", e);
+            console.error("Erreur ultime:", e);
         }
     }
 
