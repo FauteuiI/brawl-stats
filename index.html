@@ -63,28 +63,32 @@
                 const mapName = event.map?.name || "Map Inconnue";
                 const modeName = event.map?.gameMode?.name || "Brawl Stars";
                 
-                // On prépare l'image avec Weserv (notre tunnel)
-                const originalImg = event.map?.imageUrl || "";
-                const proxiedImg = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}&w=300`;
+                // On récupère l'URL d'origine
+                const rawImg = event.map?.imageUrl || "";
+                
+                // ON FORCE LE PASSAGE avec un proxy d'image différent (Cloudinary ou Weserv)
+                // Ça va "aspirer" l'image de Supercell et nous la donner proprement
+                const finalImg = `https://images.weserv.nl/?url=${encodeURIComponent(rawImg)}&default=https://cdn.brawlapi.com/unknown.png`;
 
                 container.innerHTML += `
                     <div class="card overflow-hidden flex items-center mb-4 p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
-                        <div class="relative w-24 h-24 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500">
-                            <img src="${proxiedImg}" 
+                        <div class="relative w-24 h-24 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500 shadow-inner">
+                            <img src="${finalImg}" 
                                  class="w-full h-full object-cover" 
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="hidden w-full h-full items-center justify-center bg-gray-700 text-3xl">🎮</div>
+                                 onload="this.style.opacity='1'"
+                                 style="opacity:0; transition: opacity 0.5s;"
+                                 onerror="this.src='https://raw.githubusercontent.com/BrawlAPI/BrawlAPI/main/assets/gamemodes/icons/64/gemGrab.png'">
                         </div>
                         <div class="ml-5">
                             <p class="font-bold text-xl text-yellow-400 tracking-wide brawl-font">${mapName}</p>
-                            <p class="text-xs font-black text-white uppercase bg-blue-600 px-3 py-1 rounded-full mt-1">
+                            <p class="text-xs font-black text-white uppercase bg-blue-600 px-3 py-1 rounded-full mt-1 border border-blue-400">
                                 ${modeName}
                             </p>
                         </div>
                     </div>`;
             });
         } catch (e) {
-            console.error("Erreur Stop Boucle:", e);
+            console.error("Erreur images:", e);
         }
     }
 
