@@ -43,61 +43,74 @@
     </main>
 
     <script>
-        // 1. Récupérer les Maps via BrawlAPI
-        async function loadMaps() {
-            try {
-                const res = await fetch('https://api.brawlapi.com/v1/events');
-                const data = await res.json();
-                const container = document.getElementById('maps-container');
-                container.innerHTML = '';
+    // Ce proxy va "nettoyer" la requête pour que BrawlAPI l'accepte
+    const PROXY = "https://corsproxy.io/?";
+    const API_URL = "https://api.brawlapi.com/v1/events";
 
-                // On affiche les 3 premières maps actives
-                data.active.slice(0, 3).forEach(event => {
-                    container.innerHTML += `
-                        <div class="card overflow-hidden flex items-center">
-                            <img src="${event.map.imageUrl}" class="w-24 h-24 object-cover">
-                            <div class="p-4">
-                                <p class="font-bold text-lg">${event.map.name}</p>
-                                <p class="text-sm text-gray-400">${event.map.gameMode.name}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        // 2. Chercher un joueur (Via BrawlAPI aussi pour éviter les clés complexes au début)
-        async function searchPlayer() {
-            let tag = document.getElementById('playerTag').value.replace('#', '');
-            const resultDiv = document.getElementById('player-result');
+    async function loadMaps() {
+        const container = document.getElementById('maps-container');
+        try {
+            // On combine le proxy et l'URL de l'API
+            const res = await fetch(PROXY + encodeURIComponent(API_URL));
             
-            if(!tag) return alert("Mets un tag !");
+            if (!res.ok) throw new Error("Erreur réseau");
+            
+            const data = await res.json();
+            container.innerHTML = '';
 
-            resultDiv.innerHTML = "Recherche...";
-            resultDiv.classList.remove('hidden');
-
-            try {
-                // Note: BrawlAPI a une limite sur les joueurs, si ça rate, il faudra passer par l'API officielle
-                const res = await fetch(`https://api.brawlapi.com/v1/player/${tag}`);
-                if(!res.ok) throw new Error("Joueur non trouvé");
-                const player = await res.json();
-
-                resultDiv.innerHTML = `
-                    <div class="text-center">
-                        <p class="text-3xl brawl-font text-yellow-400">${player.name}</p>
-                        <p class="text-gray-300">Trophées: ${player.trophies} 🏆</p>
-                        <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
-                            <div class="bg-gray-700 p-2 rounded">Brawlers: ${player.brawlers.length}</div>
-                            <div class="bg-gray-700 p-2 rounded">Niveau: ${player.expLevel}</div>
+            // On affiche les 3 premières maps
+            data.active.slice(0, 3).forEach(event => {
+                container.innerHTML += `
+                    <div class="card overflow-hidden flex items-center mb-4 p-2 bg-gray-700 rounded-xl border-2 border-gray-600">
+                        <img src="${event.map.imageUrl}" class="w-20 h-20 object-cover rounded-lg border border-gray-500">
+                        <div class="ml-4">
+                            <p class="font-bold text-lg text-yellow-400">${event.map.name}</p>
+                            <p class="text-sm text-blue-300 uppercase">${event.map.gameMode.name}</p>
                         </div>
                     </div>
                 `;
-            } catch (e) {
-                resultDiv.innerHTML = "<p class='text-red-500 text-center font-bold'>Erreur : Joueur introuvable ou API saturée.</p>";
-            }
+            });
+        } catch (e) { 
+            console.error("Erreur détaillée:", e);
+            container.innerHTML = "<p class='text-red-500 bg-red-900/20 p-3 rounded'>Impossible de charger les maps. Réessaie dans 1 minute.</p>";
         }
+    }
 
-        loadMaps();
-    </script>
+    async function searchPlayer() {
+        let tag = document.getElementById('playerTag').value.replace('#', '').trim();
+        const resultDiv = document.getElementById('player-result');
+        
+        if(!tag) return alert("Mets un tag (ex: PL2V82) !");
+
+        resultDiv.innerHTML = "<p class='text-center animate-pulse'>Recherche en cours...</p>";
+        resultDiv.classList.remove('hidden');
+
+        try {
+            // On utilise aussi le proxy pour le joueur
+            const playerUrl = `https://api.brawlapi.com/v1/player/${tag}`;
+            const res = await fetch(PROXY + encodeURIComponent(playerUrl));
+            
+            if(!res.ok) throw new Error("Joueur non trouvé");
+            
+            const player = await res.json();
+
+            resultDiv.innerHTML = `
+                <div class="text-center p-4 bg-gray-800 rounded-xl border-2 border-green-500">
+                    <p class="text-3xl brawl-font text-yellow-400 mb-2">${player.name}</p>
+                    <p class="text-xl font-bold">${player.trophies} 🏆</p>
+                    <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div class="bg-gray-700 p-2 rounded shadow-inner">Brawlers: <span class="text-green-400 font-bold">${player.brawlers.length}</span></div>
+                        <div class="bg-gray-700 p-2 rounded shadow-inner">Niveau: <span class="text-blue-400 font-bold">${player.expLevel}</span></div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            resultDiv.innerHTML = "<p class='text-red-500 text-center font-bold bg-red-900/20 p-2 rounded'>Joueur introuvable ou tag invalide.</p>";
+        }
+    }
+
+    // Lancement automatique
+    loadMaps();
+</script>
 </body>
 </html>
