@@ -48,8 +48,11 @@
 
     async function loadMaps() {
         const container = document.getElementById('maps-container');
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const apiUrl = encodeURIComponent("https://api.brawlapi.com/v1/events");
+
         try {
-            const response = await fetch(PROXY + encodeURIComponent(API_URL));
+            const response = await fetch(proxyUrl + apiUrl);
             const result = await response.json();
             const data = JSON.parse(result.contents);
             
@@ -58,30 +61,30 @@
 
             data.active.forEach(event => {
                 const mapName = event.map?.name || "Map Inconnue";
-                const modeName = event.event?.mode?.name || event.map?.gameMode?.name || "Brawl Stars";
+                const modeName = event.map?.gameMode?.name || "Brawl Stars";
                 
-                // --- LA SOLUTION POUR LES IMAGES ---
-                // On utilise un service de redimensionnement qui sert aussi de proxy
-                const rawImg = event.map?.imageUrl || "";
-                const safeImg = `https://images.weserv.nl/?url=${encodeURIComponent(rawImg)}&w=200&h=200&fit=cover`;
+                // On prépare l'image avec Weserv (notre tunnel)
+                const originalImg = event.map?.imageUrl || "";
+                const proxiedImg = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}&w=300`;
 
                 container.innerHTML += `
                     <div class="card overflow-hidden flex items-center mb-4 p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
                         <div class="relative w-24 h-24 flex-shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-500">
-                            <img src="${safeImg}" 
+                            <img src="${proxiedImg}" 
                                  class="w-full h-full object-cover" 
-                                 onerror="this.src='https://cdn.brawlapi.com/unknown.png'">
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="hidden w-full h-full items-center justify-center bg-gray-700 text-3xl">🎮</div>
                         </div>
                         <div class="ml-5">
                             <p class="font-bold text-xl text-yellow-400 tracking-wide brawl-font">${mapName}</p>
-                            <p class="text-xs font-black text-white uppercase bg-blue-600 px-3 py-1 rounded-full mt-1 border border-blue-400 shadow-sm">
+                            <p class="text-xs font-black text-white uppercase bg-blue-600 px-3 py-1 rounded-full mt-1">
                                 ${modeName}
                             </p>
                         </div>
                     </div>`;
             });
         } catch (e) {
-            console.error("Erreur:", e);
+            console.error("Erreur Stop Boucle:", e);
         }
     }
 
