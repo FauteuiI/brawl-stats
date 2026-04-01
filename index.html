@@ -52,33 +52,40 @@
             const res = await fetch(PROXY + encodeURIComponent(API_URL));
             const data = await res.json();
             
-            if (!data.active || data.active.length === 0) {
-                container.innerHTML = "<p class='text-gray-400'>Aucune map active trouvée.</p>";
-                return;
-            }
-
+            if (!data.active) return;
             container.innerHTML = '';
 
-            data.active.slice(0, 3).forEach(event => {
-                // --- LES CORRECTIONS SONT ICI ---
+            // On enlève le .slice(0,3) pour avoir TOUTES les maps
+            data.active.forEach(event => {
+                // RADAR POUR LE NOM DU MODE
+                const modeName = event.event?.mode?.name || 
+                                 event.map?.gameMode?.name || 
+                                 event.gameMode?.name || "Mode Inconnu";
+
+                // RADAR POUR L'IMAGE DE LA MAP
+                const mapImg = event.map?.imageUrl || 
+                               event.event?.map?.imageUrl || 
+                               "https://cdn.brawlapi.com/unknown.png";
+
                 const mapName = event.map?.name || "Map Inconnue";
-                // On va chercher plus profondément pour le mode et l'image
-                const modeName = event.map?.gameMode?.name || event.gameMode?.name || "Mode Inconnu";
-                const mapImg = event.map?.imageUrl || event.map?.map?.imageUrl || "";
-                // ---------------------------------
 
                 container.innerHTML += `
-                    <div class="card overflow-hidden flex items-center mb-4 p-2 bg-gray-700 rounded-xl border-2 border-gray-600 shadow-lg">
-                        <img src="${mapImg}" class="w-20 h-20 object-cover rounded-lg bg-gray-800" onerror="this.src='https://placehold.co/100x100?text=Brawl'">
-                        <div class="ml-4">
-                            <p class="font-bold text-lg text-yellow-400">${mapName}</p>
-                            <p class="text-sm text-blue-300 uppercase font-bold">${modeName}</p>
+                    <div class="card overflow-hidden flex items-center mb-4 p-3 bg-gray-800 rounded-2xl border-2 border-gray-600 shadow-2xl">
+                        <div class="relative w-24 h-24 flex-shrink-0">
+                            <img src="${mapImg}" class="w-full h-full object-cover rounded-xl border border-gray-500 shadow-inner" 
+                                 onerror="this.src='https://cdn.brawlapi.com/unknown.png'">
+                        </div>
+                        <div class="ml-5">
+                            <p class="font-bold text-xl text-yellow-400 tracking-wide brawl-font">${mapName}</p>
+                            <p class="text-xs font-black text-blue-400 uppercase tracking-tighter bg-blue-900/30 px-2 py-1 rounded inline-block mt-1 border border-blue-800">
+                                ${modeName}
+                            </p>
                         </div>
                     </div>`;
             });
         } catch (e) { 
-            console.error("Erreur détaillée:", e);
-            container.innerHTML = "<p class='text-red-500'>Erreur de connexion. Réessaie.</p>";
+            console.error(e);
+            container.innerHTML = "<p class='text-red-500'>Erreur de connexion...</p>";
         }
     }
 
@@ -86,8 +93,7 @@
         let tag = document.getElementById('playerTag').value.replace('#', '').trim();
         const resultDiv = document.getElementById('player-result');
         if(!tag) return alert("Mets un tag !");
-
-        resultDiv.innerHTML = "<p class='text-center animate-pulse'>Recherche...</p>";
+        resultDiv.innerHTML = "<p class='text-center animate-pulse text-yellow-500'>Recherche du compte...</p>";
         resultDiv.classList.remove('hidden');
 
         try {
@@ -95,16 +101,24 @@
             const player = await res.json();
 
             resultDiv.innerHTML = `
-                <div class="text-center p-4 bg-gray-800 rounded-xl border-2 border-green-500">
-                    <p class="text-3xl brawl-font text-yellow-400 mb-2">${player.name || 'Inconnu'}</p>
-                    <p class="text-xl font-bold">${player.trophies || 0} 🏆</p>
-                    <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
-                        <div class="bg-gray-700 p-2 rounded">Brawlers: <span class="text-green-400 font-bold">${player.brawlers?.length || 0}</span></div>
-                        <div class="bg-gray-700 p-2 rounded">Niveau: <span class="text-blue-400 font-bold">${player.expLevel || 0}</span></div>
+                <div class="text-center p-6 bg-gradient-to-b from-gray-700 to-gray-800 rounded-2xl border-4 border-yellow-500 shadow-2xl">
+                    <p class="text-4xl brawl-font text-white drop-shadow-md mb-2">${player.name}</p>
+                    <div class="inline-block bg-black/40 px-4 py-1 rounded-full border border-yellow-600/50">
+                        <p class="text-2xl font-black text-yellow-400">${player.trophies.toLocaleString()} 🏆</p>
+                    </div>
+                    <div class="mt-6 grid grid-cols-2 gap-4 text-sm font-bold">
+                        <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-600">
+                            <p class="text-gray-400">BRAWLERS</p>
+                            <p class="text-2xl text-green-400 font-black">${player.brawlers?.length || 0}</p>
+                        </div>
+                        <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-600">
+                            <p class="text-gray-400">NIVEAU</p>
+                            <p class="text-2xl text-blue-400 font-black">${player.expLevel || 0}</p>
+                        </div>
                     </div>
                 </div>`;
         } catch (e) {
-            resultDiv.innerHTML = "<p class='text-red-400 text-center'>Joueur non trouvé.</p>";
+            resultDiv.innerHTML = "<p class='text-red-500 text-center bg-red-900/30 p-4 rounded-xl border border-red-800'>Joueur introuvable ! Vérifie le Tag.</p>";
         }
     }
 
