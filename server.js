@@ -1,31 +1,13 @@
-const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
-const app = express();
+const axios = require('axios'); // Vérifie que tu as bien installé axios
 
-app.use(cors());
-
-// Route Joueur - Utilise BrawlAPI (Zéro blocage)
-app.get('/api/player/:tag', async (req, res) => {
+app.get('/quelle-est-mon-ip', async (req, res) => {
     try {
-        const tag = req.params.tag.replace('#', '');
-        const response = await axios.get(`https://api.brawlapi.com/v1/player?tag=${tag}`);
-        // On renvoie directement la data propre
-        res.json(response.data);
+        const response = await axios.get('https://api.ipify.org?format=json');
+        res.json({ 
+            message: "Copie l'IP ci-dessous dans le portail Supercell",
+            ip: response.data.ip 
+        });
     } catch (error) {
-        res.status(500).json({ error: "Joueur introuvable ou API en maintenance" });
+        res.status(500).json({ error: "Impossible de récupérer l'IP" });
     }
 });
-
-// Route Maps
-app.get('/api/maps', async (req, res) => {
-    try {
-        const response = await axios.get('https://api.brawlapi.com/v1/events');
-        res.json(response.data);
-    } catch (error) {
-        res.status(500).json({ error: "Erreur Maps" });
-    }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 SERVEUR OPERATIONNEL` || 3000));
